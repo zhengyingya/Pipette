@@ -16,6 +16,10 @@ class SerialPort {
       });
     });
   }
+  
+  getPort() {
+    return this.ports
+  }
 
   open (com) {
     let self = this;
@@ -28,6 +32,7 @@ class SerialPort {
         for (let i=0,len=data.length; i<len; i++) {
           if (data[i] === 10) {                          // 回车符表示串口接受完一段数据
             if (self.cb) {
+              console.log(self.buffer)
               self.cb(self.buffer);
               self.cb = null;
             }
@@ -53,9 +58,7 @@ class SerialPort {
   }
 
   send (data, cb) {
-    console.log(this.cb);
     this.cb = cb;
-    console.log(this.cb)
     this.serialPort.write(data, function( err ) {
       if (err) {
         cb(err);

@@ -10,7 +10,11 @@ class StateMechine {
   execute () {
     switch (this.state) {
       case STATE.INIT:
-
+        return new Promise(function (resolve, reject) {
+          window.serialPort.send('@\r\n', (data) => {
+            resolve(data);
+          });
+        })
         break;
       case STATE.ZERO:
         return new Promise(function(resolve, reject) {

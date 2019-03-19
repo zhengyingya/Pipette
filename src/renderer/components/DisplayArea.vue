@@ -1,36 +1,58 @@
 <template>
   <div class="display-area">
+    <div class="point">当前检定点: {{records[currentNum].point}}μL</div>
     <div class="left">
       <div class="value">{{value}}</div>
       <div class="tip">
-        <i class="iconfont" style="font-size: 40px">&#xe635;</i>
+        <i class="iconfont" style="font-size: 30px">&#xe635;</i>
         <span style="padding-left:20px">{{tip}}</span>
       </div>
     </div>
+    <div class="record" style="margin-top:100px;">
+      <!-- <div class="title">读数记录</div>
+      <div style="height:300px;">
+        <div v-for="(item, index) in records" class="item" :key="index">
+          <div class="num">{{index}}</div>
+          <div class="val">{{item}}</div>
+        </div>
+      </div> -->
+      <el-button type="primary" plain style="width:200px;height:60px;font-size:26px;" @click="test">开始测量</el-button>
+    </div>
     <div class="record">
-      <div class="title">测量记录</div>
-      <div v-for="(item, index) in records" class="item">
-        <div class="num">{{index}}</div>
-        <div class="val">{{item}}</div>
-      </div>
+      <el-button type="success" plain style="width:200px;height:60px;font-size:26px;" @click="onExport">导出记录</el-button>
     </div>
   </div>
 </template>
 
 <script>
-
+import { mapState } from 'vuex'
+import ejsExcel from 'ejsExcel'
+var fs = require('fs')
 const serialPort = window.serialPort;
 export default {
   name: 'displayArea',
   props: [
     'value',
     'tip',
-    'records'
+    'sampleIndex'
+    // 'records'
   ],
   data () {
     return {
-
     }
+  },
+  computed: {
+    ...mapState({
+      records: (state) => {
+        return state.measure.tableData
+      },
+      currentNum: (state) => {
+        return state.measure.currentNum
+      },
+      basicInfo: (state) => {
+        return state.list.sampleList
+      }
+    })
   },
   methods: {
     open (link) {
@@ -42,11 +64,29 @@ export default {
       });
     },
     test () {
-      window.serialPort.write('S\r\n', function (err) {
-        if (err) {
-          console.log(err);
-        }
-      });
+      this.$emit('startMear');
+    },
+    onExport () {
+      let exlBuf = fs.readFileSync(`./模板/移液器检定原始记录.xlsx`)
+      console.log(this.records)
+      let data = {
+        clientName: this.basicInfo[this.sampleIndex].clientName,
+        certCode: this.basicInfo[this.sampleIndex].certCode,
+        typeRule: this.basicInfo[this.sampleIndex].typeRule,
+        fantoryCode: this.basicInfo[this.sampleIndex].fantoryCode,
+        makeUnit: this.basicInfo[this.sampleIndex].makeUnit,
+        place: '本院',
+        tableData: this.records
+      }
+      ejsExcel.renderExcel(exlBuf, data)
+      .then((outBuf) => {
+        fs.writeFileSync(`./原始记录/${this.basicInfo[this.sampleIndex].certCode}.xlsx`, outBuf)
+        this.$message({
+          message: '原始记录生成成功，请在原始记录目录下查看',
+          type: 'success',
+          duration: 10000
+        })
+      })
     }
   }
 }
@@ -54,36 +94,53 @@ export default {
 
 <style scoped>
   .display-area {
-    height: 70%;
-    display: flex;
+    width: 480px;
+    /* height: 500px; */
+    /* display: flex; */
   }
   .display-area .left {
     display: flex;
     flex-direction: column;
     flex: 1;
+    /* border: 1px solid #ccc; */
+    box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+    margin: 40px 0; 
+    margin-right: 20px;
+    padding: 40px 0;
   }
   .display-area .record {
-    border-left: 2px solid #f0f0f0;
-    width: 400px;
+    /* border-left: 2px solid #f0f0f0; */
+    display: flex;
+    width: 480px;
+    justify-content: center;
+    margin-bottom: 20px;
   }
   .display-area .left .value {
     display: flex;
     flex: 2;
     justify-content: center;
     align-items: center;
-    font-size: 160px;
+    font-size: 100px;
     font-style: italic;
     font-weight: bolder;
-    font-family: 'Microsoft YaHei';
-    color: #409eff;
+    color: #69c0ff;
+    margin-bottom: 40px;
+  }
+  .display-area .point {
+    padding-top: 20px;
+    flex: 1;
+    /* text-align: center; */
+    font-size: 26px; 
+    font-weight: bolder;
+    color: #67c23a;
   }
   .display-area .left .tip {
     display: flex;
     flex: 1;
     justify-content: center;
     align-items: center;
-    color: #409eff;
-    font-size: 40px;
+    color: #69c0ff;
+    font-size: 30px;
   }
 
   .record .item {
@@ -93,33 +150,32 @@ export default {
   }
 
   .record .title {
-    height: 50px;
-    line-height: 50px;
+    height: 40px;
+    line-height: 40px;
     text-align: center;
     background: #336699;
     color: #fff;
-    font-size: 30px;
-    font-family: 'Microsoft YaHei';
+    font-size: 24px;
   }
 
   .record .item .num {
     width: 60px;
-    height: 60px;
+    height: 40px;
     background: #409eff;
     color: #fff;
     text-align: center;
-    line-height: 60px;
-    font-size: 40px;
+    line-height: 40px;
+    font-size: 26px;
     font-weight: bolder;
   }
   .record .item .val {
     flex: 1;
-    height: 60px;
-    line-height: 60px;
+    height: 40px;
+    line-height: 40px;
     padding-left: 20px;
     background: #ABCDEF;
     color: #fff;
-    font-size: 40px;
+    font-size: 26px;
     font-weight: bolder;
   }
 </style>

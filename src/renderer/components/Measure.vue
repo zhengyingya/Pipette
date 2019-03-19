@@ -1,8 +1,12 @@
 <template>
   <div class="measure">
     <div class="panel">
-      <DisplayArea :value="value" :tip="tip" :records="records"/>
-      <MenuArea @startMear="startMear"/>
+      <Info :sampleIndex="sampleIndex"></Info>
+      <div class="cnt">
+        <DisplayArea :value="value" :tip="tip" :records="records" :sampleIndex="sampleIndex" @startMear="startMear"/>
+        <Record></Record>
+      </div>
+      <!-- <MenuArea @startMear="startMear"/> -->
     </div>
   </div>
 </template>
@@ -11,9 +15,12 @@
 // import serialPort from '../../lib/serialport';
 import DisplayArea from './DisplayArea';
 import MenuArea from './MenuArea';
+import Record from './Record';
+import Info from './Info';
 import { ZERO, STABLE_NORMAL } from '../../constant/ack.js';
 import stateMachine from '../../common/stateMachine';
 import { STATE } from '../../common/stateMachine';
+import { mapState, mapActions } from 'vuex'
 
 const serialPort = window.serialPort;
 let queue = [];
@@ -22,24 +29,38 @@ export default {
   name: 'measure',
   components: {
     DisplayArea,
-    MenuArea
+    MenuArea,
+    Info,
+    Record
   },
   data () {
     return {
       timer: null,
       latestValue: 0,
-      value: '0.000',
+      value: '0.0000',
       tip: '准备就绪',
       records: [],
-      mearCount: 0
+      mearCount: 0,
+      sampleIndex: this.$route.params.selectIndex         // 存在store中的样品表中的序号
     }
   },
+  mounted () {
+      stateMachine.transState(STATE.INIT);
+      stateMachine.execute()
+      .then((data) => {
+        // data.substring(0, 3) === STABLE_NORMAL
+      })
+  },
+  beforeDestroy () {
+    clearInterval(this.timer);
+  },
   methods: {
+    ...mapActions(['saveMeasureData']),
     open (link) {
       this.$electron.shell.openExternal(link)
     },
     onZero () {
-      window.serialPort.write('Z\r\n', function (err) {
+      window.serialPort.write('ZI\r\n', function (err) {
         console.log(err);
       });
     },
@@ -65,23 +86,33 @@ export default {
       //     }, 100);
       //   }
       // });
+      const self = this;
       this.timer = setInterval(() => {
         this.task()
-      }, 1000);
+        // self.mearCount ++;
+        // this.saveMeasureData({
+        //   mass: 0.2
+        // })
+        // if (self.mearCount >= 18) {
+        //   clearInterval(self.timer);
+        // }
+      }, 500);
       queue.push(STATE.ZERO);
     },
 
     task () {
       const self = this;
       if (queue.length > 0) {
-        let state = queue.shift();
+        let state = queue.shift();     
         stateMachine.transState(state);
         stateMachine.execute()
         .then((data) => {
           switch (state) {
             case STATE.ZERO:
+              console.log('------', data);
               if (data === ZERO) {
                 queue.push(STATE.MEASURE);
+                self.value = '0.0000g'
                 self.tip = '请滴入液体';
                 self.latestValue = 0;
               }
@@ -90,7 +121,7 @@ export default {
               if (data.substring(0, 3) === STABLE_NORMAL) {
                 const weight = data.substr(4, 10);
                 const unit = data.substr(-1);
-                if (Number(weight.trim()) - this.latestValue < 2) {
+                if (Number(weight.trim()) - this.latestValue < 0.01) {
                   queue.push(STATE.MEASURE);
                 }
                 else {
@@ -100,13 +131,28 @@ export default {
                   self.latestValue = Number(weight.trim());
                   self.mearCount ++;
 
-                  if (self.mearCount < 5) {
+                  this.saveMeasureData({
+                    mass: weight.trim()
+                  })
+                  if (self.mearCount === 6 || self.mearCount === 12) {
+                    this.$message({
+                      message: '请注意调整移液器的检定点',
+                      type: 'warning',
+                      duration: 10000
+                    })
+                  }
+                  if (self.mearCount < 18) {
                     queue.push(STATE.ZERO);
                   }
                   else {
                     clearInterval(self.timer);
                     self.measCount = 0;
                     self.tip = '测量完成';
+                    this.$message({
+                      message: '测量已完成，请点击提交生成原始记录',
+                      type: 'success',
+                      duration: 5000
+                    })
                   }
                 }
               }
@@ -120,17 +166,23 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
   .measure {
-    height: 100vh;
+    height: 100%;
     width: 100vw;
-    padding: 10px;
+    padding: 10px 20px;
     box-sizing: border-box;
   }
   .panel {
     width: 100%;
     height: 100%;
-    border: 1px solid #ebebeb;
-    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    /* border: 1px solid #ebebeb;
+    border-radius: 3px; */
+  }
+  .panel .cnt {
+    display: flex;
+    flex: 1;
   }
 </style>

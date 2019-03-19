@@ -6,24 +6,12 @@ import router from './router'
 import store from './store'
 import '../common/serialport'
 
-import {
-  Button,
-  Select,
-  Option,
-  Message,
-  Row,
-  Col
-} from 'element-ui'
+import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css';
 import '../style/global.css';
 import '../style/iconfont.css';
 
-Vue.use(Button);
-Vue.use(Select);
-Vue.use(Option);
-Vue.use(Row);
-Vue.use(Col);
-Vue.prototype.$message = Message;
+Vue.use(ElementUI);
 
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 Vue.http = Vue.prototype.$http = axios

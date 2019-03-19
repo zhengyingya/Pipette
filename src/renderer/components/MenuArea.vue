@@ -1,6 +1,6 @@
 <template>
   <div class="menu-area">
-    <el-row>
+    <!-- <el-row>
       <el-col :span="4">
         <el-select v-model="portSel" placeholder="请选择">
           <el-option
@@ -13,8 +13,8 @@
       </el-col>
       <el-col :span="1" style="padding-top:3px;"><i class="iconfont" style="font-size:30px;margin-top:5px;" :style="{color: ports[portSel] && ports[portSel].isOpen?'#99CC33':'#aaa'}">&#xe65f;</i></el-col>
       <el-col :span="2"><el-button type="primary" @click="openPort">{{ports[portSel] && ports[portSel].isOpen ? '关闭串口' : '打开串口'}}</el-button></el-col>
-    </el-row>
-    <el-button type="primary" round style="width:250px;height:60px;font-size:26px;" @click="test">开始测量</el-button>
+    </el-row> -->
+    <el-button type="primary" style="width:250px;height:60px;font-size:26px;" @click="test">开始测量</el-button>
   </div>
 </template>
 
