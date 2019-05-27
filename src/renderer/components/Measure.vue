@@ -3,8 +3,16 @@
     <div class="panel">
       <Info :sampleIndex="sampleIndex"></Info>
       <div class="cnt">
-        <DisplayArea :value="value" :tip="tip" :records="records" :sampleIndex="sampleIndex" @startMear="startMear"/>
-        <Record></Record>
+        <DisplayArea 
+          :value="value" 
+          :tip="tip" 
+          :records="records" 
+          :sampleIndex="sampleIndex" 
+          :isWork="timer"
+          @startMear="startMear" 
+          @stopMear="stopMear"
+        />
+        <Record @recordRowClick="recordRowClick"></Record>
       </div>
       <!-- <MenuArea @startMear="startMear"/> -->
     </div>
@@ -21,6 +29,7 @@ import { ZERO, STABLE_NORMAL } from '../../constant/ack.js';
 import stateMachine from '../../common/stateMachine';
 import { STATE } from '../../common/stateMachine';
 import { mapState, mapActions } from 'vuex'
+import makeTrashable from 'trashable';
 
 const serialPort = window.serialPort;
 let queue = [];
@@ -55,7 +64,7 @@ export default {
     clearInterval(this.timer);
   },
   methods: {
-    ...mapActions(['saveMeasureData']),
+    ...mapActions(['saveMeasureData', 'changeCurrentNum']),
     open (link) {
       this.$electron.shell.openExternal(link)
     },
@@ -99,13 +108,21 @@ export default {
       }, 500);
       queue.push(STATE.ZERO);
     },
-
+    stopMear () {
+      clearInterval(this.timer);
+      this.timer = null
+      this.tip = '准备就绪'
+      if (this.trashablePromise) {
+        this.trashablePromise.trash();
+      }
+    },
     task () {
       const self = this;
       if (queue.length > 0) {
         let state = queue.shift();     
         stateMachine.transState(state);
-        stateMachine.execute()
+        this.trashablePromise = makeTrashable(stateMachine.execute())
+        this.trashablePromise
         .then((data) => {
           switch (state) {
             case STATE.ZERO:
@@ -138,7 +155,8 @@ export default {
                     this.$message({
                       message: '请注意调整移液器的检定点',
                       type: 'warning',
-                      duration: 10000
+                      duration: 100000,
+                      customClass: 'mymessage'
                     })
                   }
                   if (self.mearCount < 18) {
@@ -161,10 +179,30 @@ export default {
           }
         });
       }
+    },
+    recordRowClick(index) {
+      if (this.timer) {
+        this.$message({
+          message: '请先停止测量',
+          type: 'warning',
+          duration: 3000
+        })
+      } else {
+        this.changeCurrentNum({index})
+        this.mearCount = index
+      }
     }
   }
 }
 </script>
+<style>
+  .mymessage .el-message {
+    top: 400px;
+  }
+  .mymessage .el-message__icon, .mymessage .el-message__content {
+    font-size: 30px;
+  }
+</style>
 
 <style scoped>
   .measure {

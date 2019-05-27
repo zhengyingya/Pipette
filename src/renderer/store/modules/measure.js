@@ -1,4 +1,4 @@
-import basis from '../../../constant/basis'
+import basis, { allowableErrorTable } from '../../../constant/basis'
 import kt from '../../../constant/kt'
 import usb from '../../../common/usb'
 
@@ -6,19 +6,21 @@ import usb from '../../../common/usb'
 const init = () => {
   let list = []
   for (let i=0; i< 18; i++) {
-    let point = 0.1
+    let point = 0.5
     if (parseInt(i / 6) === 1) {
-      point = 0.5
+      point = 0.1
     } else if (parseInt(i / 6) === 2) {
       point = 1
     }
     list.push({
+      index: i,
       point: point,
       temp: '',
       mass: '',
       k: '',
       v20: '',
       ave: '',
+      onceE: '',
       relativeError: '',
       repeatability: ''
     })
@@ -37,6 +39,9 @@ function clearAll(state) {
 const computeE = (state, start) => {
   let v = 0;
   for (let i = start; i < start + 6; i++) {
+    if (state.tableData[i].v20 === '') {
+      return ['', '', '']
+    }
     v += Number(state.tableData[i].v20)
   }
   const ave = (v / 6).toFixed(2)                  // 计算平均值
@@ -50,9 +55,15 @@ const computeE = (state, start) => {
   return [ave, E, S]
 }
 
+// 计算单次误差
+const computeOnceE = (point, v20) => {
+  const E = ((Number(point) - Number(v20)) * 100 / Number(v20)).toFixed(1)   // 计算误差
+  return E
+}
+
 // 判断结论
 const computeResult = (point, E, S) => {
-  const { error, repeatability } = basis[state.capacity][point]
+  const { error, repeatability } = allowableErrorTable[point]
   if (Math.abs(E) <= error && S <= repeatability ) {
     return '合格'
   } else {
@@ -72,6 +83,9 @@ const actions = {
   changeCapacity(context, { capacity }) {
     context.commit('MEASURE_CHANGE_CAPACITY', { capacity })
   },
+  customizedCapacity(context, data) {
+    context.commit('MEASURE_CUSTOMIZED_CAPACITY', data)
+  },
   saveMeasureData(context, { mass }) {
     context.commit('MEASURE_SAVE_MEASURE_DATA', { mass })
   },
@@ -80,6 +94,9 @@ const actions = {
   },
   clearAll({ commit }) {
     commit('MEASURE_CLEAR_ALL')
+  },
+  changeCurrentNum(context, { index }) {
+    context.commit('MEASURE_CHANGE_CURRENTNUM', { index })
   }
 }
 
@@ -91,6 +108,10 @@ const mutations = {
     let keys = Object.keys(basis[capacity]).sort((a, b) => {
       return Number(a) - Number(b)
     })
+    const _m = keys[0]
+    keys[0] = keys[1]
+    keys[1] = _m
+
     let data = state.tableData.map((item, index) => {
       let point = keys[0]
       if (parseInt(index / 6) === 1) {
@@ -113,6 +134,7 @@ const mutations = {
         result
       }
     }
+
     if (state.tableData[6].ave !== '') {
       const ave = state.tableData[6].ave
       const E = ((Number(state.tableData[6].point) - ave) * 100 / ave).toFixed(1)
@@ -135,29 +157,55 @@ const mutations = {
     }
     state.tableData = [].concat(JSON.parse(JSON.stringify(state.tableData)))
   },
+  MEASURE_CUSTOMIZED_CAPACITY(state, { pointOne, pointTwo, pointThree }) {
+    let data = state.tableData.map((item, index) => {
+      let point = pointOne
+      if (parseInt(index / 6) === 1) {
+        point = pointTwo
+      } else if (parseInt(index / 6) === 2) {
+        point = pointThree
+      }
+      return { ...item, point }
+    })
+    state.tableData = [].concat(JSON.parse(JSON.stringify(data)))
+  },
   MEASURE_SAVE_MEASURE_DATA(state, { mass }) {
     const currentNum = state.currentNum
     const temp = usb.get()
+    const v20 = (Number(mass) * Number(kt[temp]) * 1000).toFixed(2)
     state.tableData[currentNum] = {
       ...state.tableData[currentNum],
       mass,
       temp,
       k: kt[temp],
-      v20: (Number(mass) * Number(kt[temp]) * 1000).toFixed(2)
+      v20: v20,
+      onceE: computeOnceE(state.tableData[currentNum].point, v20)
     }
-    if (currentNum > 0 && parseInt(currentNum+1) % 6 === 0) {
-      const start = parseInt(currentNum) - 5
-      let [ave, E, S] = computeE(state, start)
-      let result = computeResult(state.tableData[start].point, E, S)
+
+    const start = parseInt(currentNum) - parseInt(currentNum) % 6
+    let [ave, E, S] = computeE(state, start)
+    let result = computeResult(state.tableData[start].point, E, S)
+    state.tableData[start] = {
+      ...state.tableData[start],
+      ave,
+      relativeError: E,
+      repeatability: S,
+      result
+    }
+
+    // if (currentNum > 0 && parseInt(currentNum+1) % 6 === 0) {
+    //   const start = parseInt(currentNum) - 5
+    //   let [ave, E, S] = computeE(state, start)
+    //   let result = computeResult(state.tableData[start].point, E, S)
       
-      state.tableData[start] = {
-        ...state.tableData[start],
-        ave,
-        relativeError: E,
-        repeatability: S,
-        result
-      }
-    }
+    //   state.tableData[start] = {
+    //     ...state.tableData[start],
+    //     ave,
+    //     relativeError: E,
+    //     repeatability: S,
+    //     result
+    //   }
+    // }
     
     if (state.currentNum === 17) {
       state.currentNum = 0
@@ -168,12 +216,14 @@ const mutations = {
   },
   MEASURE_SAVE_REMEAR_DATA(state, { mass, index }) {
     const temp = usb.get()
+    const v20 = (Number(mass) * Number(kt[temp]) * 1000).toFixed(2)
     state.tableData[index] = {
       ...state.tableData[index],
       mass,
       temp,
       k: kt[temp],
-      v20: (Number(mass) * Number(kt[temp]) * 1000).toFixed(2)
+      v20: v20,
+      onceE: computeOnceE(state.tableData[currentNum].point, v20)
     }
     const start = parseInt(index) - parseInt(index) % 6
     let [ave, E, S] = computeE(state, start)
@@ -186,6 +236,9 @@ const mutations = {
       result
     }
     state.tableData = [].concat(JSON.parse(JSON.stringify(state.tableData)))
+  },
+  MEASURE_CHANGE_CURRENTNUM(state, { index }) {
+    state.currentNum = index
   }
 }
 

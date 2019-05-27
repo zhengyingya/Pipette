@@ -19,6 +19,12 @@
         </el-option>
       </el-select>
     </el-row>
+    <el-row type="flex" style="margin-bottom:10px;">
+      <el-checkbox v-model="isCustomized" @change="customerChange" style="line-height: 36px;">自定义检定点</el-checkbox>
+      <label class="custom-label">检定点1</label><el-input class="custom-input" v-model="pointOne"></el-input><span class="custom-span">μL</span>
+      <label class="custom-label">检定点2</label><el-input class="custom-input" v-model="pointTwo"></el-input><span class="custom-span">μL</span>
+      <label class="custom-label">检定点3</label><el-input class="custom-input" v-model="pointThree"></el-input><span class="custom-span">μL</span>
+    </el-row>
     <!-- <el-row type="flex" style="margin-bottom:10px;text-align:center;">
       <div class="label">标称容量</div>
       <el-select v-model="capacitySel" placeholder="请选择" @change="capacityChange">
@@ -44,7 +50,11 @@ export default {
   data () {
     return {
       basis,
-      capacitySel: '1'
+      capacitySel: '1',
+      isCustomized: false,
+      pointOne: '',
+      pointTwo: '',
+      pointThree: ''
     }
   },
   computed: {
@@ -55,9 +65,23 @@ export default {
     })
   },
   methods: {
-    ...mapActions(['changeCapacity']),
+    ...mapActions(['changeCapacity', 'customizedCapacity']),
     capacityChange (val) {
       this.changeCapacity({ capacity: val })
+    },
+    customerChange (val) {
+      if (val) {
+        if (this.pointOne && this.pointTwo && this.pointThree) {
+          this.customizedCapacity({pointOne: this.pointOne, pointTwo: this.pointTwo, pointThree:this.pointThree})
+        } else {
+          this.$message({
+            message: '请先输入三个检定点',
+            type: 'error',
+            duration: 3000
+          })
+          this.isCustomized = false
+        }
+      }
     }
   }
 }
@@ -68,6 +92,11 @@ export default {
     border-radius: 0;
     border: 1px solid #69c0ff;
     color: #69c0ff;
+  }
+  .custom-input .el-input__inner {
+    height: 35px;
+    border: 1px solid #ccc;
+    color: #000;
   }
 </style>
 
@@ -92,5 +121,19 @@ export default {
     /* border-radius: 0 5px 5px 0; */
     height: 43px;
     line-height: 43px;
+  }
+  .custom-input {
+    width: 120px;
+  }
+  .custom-label {
+    height: 35px;
+    line-height: 35px;
+    color: #333;
+    margin-left: 20px;
+    margin-right: 10px;
+  }
+  .custom-span {
+    line-height: 35px;
+    margin-left: 10px;
   }
 </style>

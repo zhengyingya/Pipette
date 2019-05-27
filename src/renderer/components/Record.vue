@@ -6,7 +6,9 @@
       height="100%"
       :span-method="arraySpanMethod"
       :row-style="rowStyle"
-      :data="tableData">
+      :cell-style="cellStyle"
+      :data="tableData"
+      @row-click="rowClick">
       <el-table-column
         width="60"
         label="操作">
@@ -44,6 +46,12 @@
       <el-table-column
         prop="v20"
         label="V20时实际容积/μL">
+      </el-table-column>
+      <el-table-column
+        label="单次误差/%">
+        <template slot-scope="scope">
+          <span :style="{color: scope.row.onceResult==='qualified'?'':'red'}">{{scope.row.onceE}}</span>
+        </template>
       </el-table-column>
       <el-table-column
         prop="ave"
@@ -87,7 +95,7 @@ export default {
   methods: {
     ...mapActions(['saveRemearData']),
     arraySpanMethod({ row, column, rowIndex, columnIndex }) {
-      if (columnIndex >= 7) {
+      if (columnIndex >= 8) {
         if (rowIndex % 6 === 0) {
           return {
             rowspan: 6,
@@ -102,12 +110,24 @@ export default {
       }
     },
     rowStyle ({row, rowIndex}) {
-      if (rowIndex === this.currentNum - 1) {
+      if (rowIndex === this.currentNum ) {
+        return {
+          background: '#c2e7b0!important',
+          'font-weight': 900
+        }
+      } else if (rowIndex === this.currentNum - 1) {
         return {
           color: '#69c0ff',
           'font-weight': 900
         }
       }
+    },
+    cellStyle ({row, column, rowIndex, columnIndex}) {
+      if (rowIndex === this.currentNum ) {
+        return {
+          background: '#c2e7b0!important'
+        }
+      } 
     },
     remear (index) {
       // this.saveRemearData({
@@ -152,6 +172,9 @@ export default {
             default:
           }
         });
+    },
+    rowClick(row, column, event) {
+      this.$emit('recordRowClick', row.index)
     }
   }
 }

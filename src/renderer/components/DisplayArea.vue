@@ -1,6 +1,6 @@
 <template>
   <div class="display-area">
-    <div class="point">当前检定点: {{records[currentNum].point}}μL</div>
+    <div class="point"><span>序号: {{currentNum+1}}</span><span style="margin-left:80px;">当前检定点: {{records[currentNum].point}}μL</span></div>
     <div class="left">
       <div class="value">{{value}}</div>
       <div class="tip">
@@ -16,10 +16,11 @@
           <div class="val">{{item}}</div>
         </div>
       </div> -->
-      <el-button type="primary" plain style="width:200px;height:60px;font-size:26px;" @click="test">开始测量</el-button>
+      <el-button type="primary" plain style="width:200px;height:60px;font-size:26px;" @click="test" :disabled="isWork">开始</el-button>
+      <el-button type="danger" plain style="width:200px;height:60px;font-size:26px;" @click="stop" :disabled="!isWork">停止</el-button>
     </div>
     <div class="record">
-      <el-button type="success" plain style="width:200px;height:60px;font-size:26px;" @click="onExport">导出记录</el-button>
+      <el-button type="success" plain style="width:200px;height:60px;font-size:26px;" @click="onExport" :disabled="isWork">导出记录</el-button>
     </div>
   </div>
 </template>
@@ -34,7 +35,8 @@ export default {
   props: [
     'value',
     'tip',
-    'sampleIndex'
+    'sampleIndex',
+    'isWork'
     // 'records'
   ],
   data () {
@@ -65,6 +67,9 @@ export default {
     },
     test () {
       this.$emit('startMear');
+    },
+    stop () {
+      this.$emit('stopMear');
     },
     onExport () {
       let exlBuf = fs.readFileSync(`./模板/移液器检定原始记录.xlsx`)
