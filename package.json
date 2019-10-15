@@ -6,7 +6,7 @@
   "license": null,
   "main": "./dist/electron/main.js",
   "scripts": {
-    "build": "node .electron-vue/build.js && electron-builder",
+    "build": "node .electron-vue/build.js && electron-builder --ia32",
     "build:dir": "node .electron-vue/build.js && electron-builder --dir",
     "build:clean": "cross-env BUILD_TARGET=clean node .electron-vue/build.js",
     "build:web": "cross-env BUILD_TARGET=web node .electron-vue/build.js",
@@ -20,11 +20,12 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "my-project",
+    "productName": "移液器测量系统",
     "appId": "org.simulatedgreg.electron-vue",
     "directories": {
       "output": "build"
     },
+    "npmRebuild": false,
     "files": [
       "dist/electron/**/*"
     ],
@@ -47,7 +48,7 @@
       "icon": "build/icons/icon.icns"
     },
     "win": {
-      "icon": "build/icons/icon.ico"
+      "icon": "build/icons/icon.jpg"
     },
     "linux": {
       "icon": "build/icons"
@@ -55,15 +56,15 @@
   },
   "dependencies": {
     "axios": "^0.16.1",
-    "ejsexcel": "^3.5.3",
+    "ejsexcel": "^3.5.4",
     "element-ui": "^2.5.4",
     "nedb": "^1.8.0",
     "node-hid": "^0.7.7",
     "node-sass": "^4.11.0",
     "node-xlsx": "^0.14.1",
-    "oracledb": "^3.0.0",
+    "oracledb": "3.0.0",
     "sass-loader": "^7.1.0",
-    "serialport": "^6.2.1",
+    "serialport": "6.2.2",
     "trashable": "^1.0.7",
     "vue": "^2.3.3",
     "vue-electron": "^1.0.6",
@@ -93,7 +94,6 @@
     "electron-builder": "^19.19.1",
     "electron-debug": "^1.4.0",
     "electron-devtools-installer": "^2.2.0",
-    "electron-rebuild": "^1.8.1",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^0.11.2",
     "html-webpack-plugin": "^2.30.1",

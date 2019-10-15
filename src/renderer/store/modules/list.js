@@ -29,7 +29,7 @@ const actions = {
       ENTRUST_DATE,\
       SAMPLE_NAME from EMC.TASK_SAMPLES INNER JOIN EMC.TASK_ORDER\
       ON TASK_SAMPLES.TASK_SAMPLE_ORDER = TASK_ORDER.ID\
-      where SAMPLE_NAME = '压力表' and NODE_STATUS='TESTSAMPLE'"
+      where SAMPLE_NAME = '移液器' and (NODE_STATUS='TESTSAMPLE' or NODE_STATUS='RECORD')"
       ) //TESTSAMPLE
       .then(result => {
         console.log(result);

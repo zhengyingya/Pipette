@@ -7,40 +7,20 @@
       stripe
       style="width: 100%"
       header-row-class-name="u-table-head"
-      class="u-table">
-      <el-table-column
-        prop="clientName"
-        label="委托单位">
-      </el-table-column>
-      <el-table-column
-        prop="sampleName"
-        label="样品名称"
-        width="90">
-      </el-table-column>
-      <el-table-column
-        prop="certCode"
-        label="证书编号"
-        width="120">
-      </el-table-column>
-      <el-table-column
-        prop="entrustDate"
-        label="委托日期"
-        width="120">
+      class="u-table"
+    >
+      <el-table-column prop="clientName" label="委托单位"></el-table-column>
+      <el-table-column prop="sampleName" label="样品名称" width="90"></el-table-column>
+      <el-table-column prop="certCode" label="证书编号" width="120"></el-table-column>
+      <el-table-column prop="entrustDate" label="委托日期" width="120">
         <template slot-scope="scope">
           <span>{{dateFormat(scope.row.entrustDate, 'yyyy-MM-dd')}}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        prop="typeRule"
-        label="型号规格">
-      </el-table-column>
-      <el-table-column
-        width="120">
+      <el-table-column prop="typeRule" label="型号规格"></el-table-column>
+      <el-table-column width="120">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="primary"
-            @click="onConfirm(scope.$index, scope.row)">测量</el-button>
+          <el-button size="mini" type="primary" @click="onConfirm(scope.$index, scope.row)">测量</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -61,54 +41,53 @@
         <el-button @click="dialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="onConfirm">确 定</el-button>
       </span>
-    </el-dialog> -->
+    </el-dialog>-->
   </div>
 </template>
 
 <script>
-import oracleManage from '../../../database/oracle'
-import { dateFormat } from '../../../utils/commonMethod.js'
-import { mapActions, mapState } from 'vuex'
-console.log(oracleManage)
+// import oracleManage from '../../../database/oracle'
+import { dateFormat } from "../../../utils/commonMethod.js";
+import { mapActions, mapState } from "vuex";
+
 export default {
-  name: 'tableData',
-  components: {
-  },
-  data () {
+  name: "tableData",
+  components: {},
+  data() {
     return {
       dialogVisible: false,
       configIndex: 0,
       selectIndex: 0
-    }
+    };
   },
   computed: {
     ...mapState({
-      sampleList: (state) => {
-        return state.list.sampleList
+      sampleList: state => {
+        return state.list.sampleList;
       },
-      configData: (state) => {
+      configData: state => {
         // this.configName = state.mearConfig.configData[0] ? state.mearConfig.configData[0].name : ''
-        return state.mearConfig.configData
+        return state.mearConfig.configData;
       }
     })
   },
-  created () {
-    this.getSampleList()
+  created() {
+    this.getSampleList();
     // this.getConfigData()
   },
   methods: {
-    ...mapActions(['getSampleList', 'changeRouter']),
+    ...mapActions(["getSampleList", "changeRouter"]),
     dateFormat,
-    handleEdit (index) {
-      this.dialogVisible = true
-      this.selectIndex = index
+    handleEdit(index) {
+      this.dialogVisible = true;
+      this.selectIndex = index;
     },
-    onConfirm (index) {
-      this.$router.push({ name: 'home', params: { selectIndex: index } })
-      this.changeRouter({ name: 'home' })
+    onConfirm(index) {
+      this.$router.push({ name: "home", params: { selectIndex: index } });
+      this.changeRouter({ name: "home" });
     }
-  },
-}
+  }
+};
 </script>
 <style lang="scss">
 .page-list {
@@ -127,7 +106,7 @@ export default {
   box-sizing: border-box;
   .u-table {
     border: 1px solid #ebeef5;
-    box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   }
 }
 </style>

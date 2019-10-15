@@ -1,1 +1,2 @@
-{"type":"mearSensor","portName":"/dev/tty.usbserial","_id":"Hw7HCVLjULPHI9Hi"}
+{"type":"mearSensor","portName":"COM1","_id":"HjPcOFhmJnksFBEr"}
+{"type":"filePath","pathName":"F:\\WorkSpace\\window\\Pipette","_id":"xF3ka2qg2Xq3BSeI"}
